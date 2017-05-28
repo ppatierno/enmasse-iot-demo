@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    name: spark-worker
+  name: spark-worker
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: spark-worker
+    spec:
+      containers:
+      - name: spark-worker
+        image: ppatierno/spark:2.0
+        command: ["/start-worker.sh"]
+        ports:
+        - containerPort: 8081
+          protocol: TCP
+
