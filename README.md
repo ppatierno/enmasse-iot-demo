@@ -28,7 +28,61 @@ The above deployment files refer to the ppatierno/spark:2.0 image available on D
 
 ### Local minikube
 
-TODO
+> If you have re-built the Apache Spark image and you want to avoid pushing it to the Docker Hub, use the following command `docker save <image> | minikube ssh docker load` for making it available in the Docker images registry which is local to the virtual machine used by minikube.
+
+In order to deploy the Spark master node and the related service :
+
+        kubectl create -f spark-kubernetes/spark-master.yaml
+        kubectl create -f spark-kubernetes/spark-master-service.yaml
+
+With the current deployment, the Spark master service is reachable only inside the cluster (needed by the Spark worker node) but we are not able to submit Spark jobs from outside the cluster (i.e. from the host).
+In order to do that we can patch the Spark master service changing its type from _ClusterIP_ to _NodePort_ in the following way :
+
+        kubectl patch service spark-master -p '{"spec" : { "type" : "NodePort" }}'
+
+After that, the Spark master service will expose ports 8080 and 7077 inside the cluster and different ports for being accessible from outside the cluser (node ports are assigned over 30000).
+For example, running :
+
+        kubectl get service
+
+The output could be :
+
+        NAME           CLUSTER-IP   EXTERNAL-IP   PORT(S)                         AGE
+        kubernetes     10.0.0.1     <none>        443/TCP                         9m
+        spark-master   10.0.0.197   <nodes>       8080:32592/TCP,7077:32304/TCP   6m
+
+It means that inside the cluster the Spark master node ports are 8080 and 7077 but from outisde the cluster, using the `minikube` ip address, the exposed ports are 32592 (instead of 8080) and 32304 (instead of 7077).
+
+> For getting the IP address of the virtual machine cluster, the command `minikube ip` can be used.
+
+In order to deploy the Spark worker node :
+
+        kubectl create -f spark-kubernetes/spark-worker.yaml
+
+![Apache Spark on Kubernetes](./images/spark_kubernetes.png)
+
+In order to deploy EnMasse you can follow this Getting Started [guide](https://github.com/EnMasseProject/enmasse/blob/master/documentation/getting-started/kubernetes.md) mainly based on downloading the latest EnMasse release from [here](https://github.com/EnMasseProject/enmasse/releases), unpack it and executing following commands for a manual deployment :
+
+        kubectl create sa enmasse-service-account
+        kubectl apply -f kubernetes/enmasse.yaml
+
+After deploying EnMasse, instead of configuring "ingress" resources for accessing the messaging infrastructure outside of the cluster from the host, it's possible to execute the same patch as for the Spark master service, changing from _ClusterIP_ to _NodePort_ for the messaging service. If you want to access using MQTT protocol as well, the same thing should be done for the mqtt service.
+
+        kubectl patch service messaging -p '{"spec" : { "type" : "NodePort" }}'
+        kubectl patch service mqtt -p '{"spec" : { "type" : "NodePort" }}'
+
+In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) ports, there will be other node ports useful for reaching such services from outside the cluster.
+
+        NAME                 CLUSTER-IP   EXTERNAL-IP   PORT(S)                                                         AGE
+        address-controller   10.0.0.56    <none>        8080/TCP,5672/TCP                                               7m
+        admin                10.0.0.54    <none>        55672/TCP,5672/TCP,55667/TCP                                    3m
+        kubernetes           10.0.0.1     <none>        443/TCP                                                         1h
+        messaging            10.0.0.35    <nodes>       5672:32014/TCP,5671:32661/TCP,55673:32092/TCP,55672:30490/TCP   3m
+        mqtt                 10.0.0.125   <nodes>       1883:31674/TCP,8883:30896/TCP                                   3m
+        spark-master         10.0.0.197   <nodes>       8080:32592/TCP,7077:32304/TCP                                   1h
+        subscription         10.0.0.178   <none>        5672/TCP                                                        3m
+
+![EnMasse on Kubernetes](./images/enmasse_kubernetes.png)
 
 ### Azure Container Service
 
