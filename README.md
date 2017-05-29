@@ -86,7 +86,38 @@ In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) port
 
 ### Azure Container Service
 
-TODO
+In order to use the ACS, the first step is to deploy a Kubernetes cluster following the official [walkthrough](https://docs.microsoft.com/en-us/azure/container-service/container-service-kubernetes-walkthrough).
+
+The big difference compared to the local minikube solution is that the services need to be exposed using the provisioned Azure load balancer, so the same patch is used for changing type from _ClusterIP_ to _LoadBalancer_.
+
+        kubectl patch service spark-master -p '{"spec" : { "type" : "LoadBalancer" }}'
+
+In this case, the Spark master service will have an assigned external IP :
+
+        NAME           CLUSTER-IP     EXTERNAL-IP     PORT(S)                         AGE
+        kubernetes     10.0.0.1       <none>          443/TCP                         14m
+        spark-master   10.0.201.123   13.74.165.147   8080:31207/TCP,7077:30753/TCP   5m
+
+For EnMasse, a specific YAML file is provided in order to add other services (for messaging, mqtt, ...) which are exposed outside the cluster using the cloud provider load balancer.
+
+        kubectl apply -f kubernetes/addons/external-lb.yaml
+
+So finally the exposed services are the following :
+
+        NAME                          CLUSTER-IP     EXTERNAL-IP      PORT(S)                                 AGE
+        address-controller            10.0.194.238   <none>           8080/TCP,5672/TCP                       11m
+        address-controller-external   10.0.68.163    52.169.146.241   8080:32595/TCP,5672:31099/TCP           3m
+        admin                         10.0.122.222   <none>           55672/TCP,5672/TCP,55667/TCP            11m
+        console-external              10.0.196.37    52.169.145.32    56720:32351/TCP,8080:31811/TCP          3m
+        kubernetes                    10.0.0.1       <none>           443/TCP                                 31m
+        messaging                     10.0.158.202   <none>           5672/TCP,5671/TCP,55673/TCP,55672/TCP   11m
+        messaging-external            10.0.253.186   52.164.120.234   5672:31398/TCP,5671:31813/TCP           3m
+        mqtt                          10.0.93.42     <none>           1883/TCP,8883/TCP                       11m
+        mqtt-external                 10.0.12.156    13.74.150.148    1883:31653/TCP,8883:30343/TCP           3m
+        spark-master                  10.0.201.123   13.74.165.147    8080:31207/TCP,7077:30753/TCP           21m
+        subscription                  10.0.184.112   <none>           5672/TCP                                11m
+
+Even if node ports are showed with the default ones (i.e. 8080, 5672, 1883, ...), the last ones can be used together with the external IP for accessing services from outside the cluster.
 
 ## OpenShift
 
