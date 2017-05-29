@@ -14,7 +14,7 @@ spec:
       containers:
       - name: spark-master
         image: ppatierno/spark:2.0
-        imagePullPolicy: "Always"
+        imagePullPolicy: "IfNotPresent"
         command: ["/start-master.sh"]
         ports:
           - containerPort: 7077
