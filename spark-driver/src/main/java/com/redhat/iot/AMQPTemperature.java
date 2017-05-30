@@ -9,12 +9,16 @@ import org.apache.spark.streaming.amqp.AMQPUtils;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaReceiverInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Some;
 
 /**
  * Created by ppatiern on 30/05/17.
  */
 public class AMQPTemperature {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPTemperature.class);
 
     private static final String APP_NAME = "AMQPTemperature";
     private static final Duration BATCH_DURATION = new Duration(1000);
@@ -31,10 +35,12 @@ public class AMQPTemperature {
         if (messagingServiceHost != null) {
             host = messagingServiceHost;
         }
+        LOG.info("host = {}", host);
         String messagingServicePort = System.getenv("MESSAGING_SERVICE_PORT");
         if (messagingServicePort != null) {
             port = Integer.valueOf(messagingServicePort);
         }
+        LOG.info("port = {}", port);
 
         JavaStreamingContext ssc = JavaStreamingContext.getOrCreate(CHECKPOINT_DIR, AMQPTemperature::createStreamingContext);
 
@@ -45,7 +51,7 @@ public class AMQPTemperature {
     private static JavaStreamingContext createStreamingContext() {
 
         SparkConf conf = new SparkConf().setAppName(APP_NAME);
-        conf.setMaster("local[2]");
+        //conf.setMaster("local[2]");
         conf.set("spark.streaming.receiver.writeAheadLog.enable", "true");
 
         JavaStreamingContext ssc = new JavaStreamingContext(conf, BATCH_DURATION);
