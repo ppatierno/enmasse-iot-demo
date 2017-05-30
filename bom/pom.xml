@@ -12,5 +12,11 @@
   <artifactId>enmasse-spark-demo-bom</artifactId>
   <packaging>pom</packaging>
 
+  <properties>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <spark-streaming.version>2.0.0</spark-streaming.version>
+  </properties>
+
 </project>
 
