@@ -27,6 +27,15 @@ public class AMQPTemperature {
 
     public static void main(String[] args) throws InterruptedException {
 
+        String messagingServiceHost = System.getenv("MESSAGING_SERVICE_HOST");
+        if (messagingServiceHost != null) {
+            host = messagingServiceHost;
+        }
+        String messagingServicePort = System.getenv("MESSAGING_SERVICE_PORT");
+        if (messagingServicePort != null) {
+            port = Integer.valueOf(messagingServicePort);
+        }
+
         JavaStreamingContext ssc = JavaStreamingContext.getOrCreate(CHECKPOINT_DIR, AMQPTemperature::createStreamingContext);
 
         ssc.start();
