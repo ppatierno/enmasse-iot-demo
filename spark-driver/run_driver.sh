@@ -3,7 +3,7 @@
 if [ -z "$SPARK_MASTER_SERVICE_HOST" ]; then
     export SPARK_MASTER=local[*]
 else
-    export SPARK_MASTER=spark://$SPARK_MASTER_SERVICE_HOST:$SPARK_MASTER_SERVICE_PORT
+    export SPARK_MASTER=spark://$SPARK_MASTER_SERVICE_HOST:$SPARK_MASTER_SERVICE_PORT_SPARK
 fi
 
 echo "Spark master node = " $SPARK_MASTER

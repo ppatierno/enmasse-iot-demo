@@ -67,7 +67,7 @@
               <verbose>true</verbose>
               <images>
                 <image>
-                  <name>ppatierno/enmasse-spark-driver:${project.version}</name>
+                  <name>ppatierno/spark-driver:${project.version}</name>
                   <build>
                     <from>ppatierno/spark:2.0</from>
                     <cmd>
