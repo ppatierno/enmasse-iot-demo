@@ -1,0 +1,26 @@
+{
+  "apiVersion": "v3",
+  "kind": "AddressList",
+  "items": [
+    {
+      "metadata": {
+        "name": "temperature"
+      },
+      "spec": {
+        "store_and_forward": true,
+        "multicast": false,
+        "flavor": "vanilla-queue"
+      }
+    },
+    {
+      "metadata": {
+        "name": "max"
+      },
+      "spec": {
+        "store_and_forward": true,
+        "multicast": false,
+        "flavor": "vanilla-queue"
+      }
+    }
+  ]
+}

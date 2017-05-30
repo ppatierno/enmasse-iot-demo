@@ -70,11 +70,15 @@ After deploying EnMasse, instead of configuring "ingress" resources for accessin
 
         kubectl patch service messaging -p '{"spec" : { "type" : "NodePort" }}'
         kubectl patch service mqtt -p '{"spec" : { "type" : "NodePort" }}'
+        
+Finally, in order to interact with the address-controller for using the HTTP REST API for addresses management, we can do the same on the related service.
+
+        kubectl patch service address-controller -p '{"spec" : { "type" : "NodePort" }}'
 
 In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) ports, there will be other node ports useful for reaching such services from outside the cluster.
 
         NAME                 CLUSTER-IP   EXTERNAL-IP   PORT(S)                                                         AGE
-        address-controller   10.0.0.56    <none>        8080/TCP,5672/TCP                                               7m
+        address-controller   10.0.0.56    <nodes>       8080:31165/TCP,5672:30398/TCP                                   7m
         admin                10.0.0.54    <none>        55672/TCP,5672/TCP,55667/TCP                                    3m
         kubernetes           10.0.0.1     <none>        443/TCP                                                         1h
         messaging            10.0.0.35    <nodes>       5672:32014/TCP,5671:32661/TCP,55673:32092/TCP,55672:30490/TCP   3m
@@ -138,5 +142,20 @@ The first needed step is to build the source code application as described [here
 
 In order to run both applications the steps needed are described [here](https://github.com/redhat-iot/amqp-spark-demo#running-demo-applications).
 Regarding the AMQP publisher application, the _messaging_ service address/port will be specified; the same of the Spark driver other than the right address for the Spark master node.
+
+### Deploying addresses
+
+TODO
+
+### Spark driver application
+
+The `spark-driver` folder provides the above AMQP temperature application (developed in Java) and a Docker image for running the related Spark driver inside the cluster.
+This application can be packaged in the following way :
+
+        mvn package -Pbuild-docker-image
+
+After that, the built Docker image can be deployed to the cluster with this command :
+
+        kubectl create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-svc.yaml
 
 
