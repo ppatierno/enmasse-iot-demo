@@ -1,8 +1,15 @@
 package com.redhat.iot;
 
+import io.vertx.core.Vertx;
+import io.vertx.proton.ProtonClient;
+import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonHelper;
+import io.vertx.proton.ProtonSender;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Section;
+import org.apache.qpid.proton.message.Message;
 import org.apache.spark.SparkConf;
+import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Duration;
 import org.apache.spark.streaming.amqp.AMQPUtils;
@@ -27,7 +34,8 @@ public class AMQPTemperature {
 
     private static String host = "localhost";
     private static int port = 5672;
-    private static String address = "temperature";
+    private static String sourceAddress = "temperature";
+    private static String destinationAddress = "max";
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -58,7 +66,7 @@ public class AMQPTemperature {
         ssc.checkpoint(CHECKPOINT_DIR);
 
         JavaReceiverInputDStream<Integer> receiveStream =
-                AMQPUtils.createStream(ssc, host, port, address, message -> {
+                AMQPUtils.createStream(ssc, host, port, sourceAddress, message -> {
 
                     Section body = message.getBody();
                     if (body instanceof AmqpValue) {
@@ -80,8 +88,52 @@ public class AMQPTemperature {
 
                 }, new Duration(5000), new Duration(5000));
 
-        max.print();
+        //max.print();
+
+        Broadcast<String> messagingHost = ssc.sparkContext().broadcast(host);
+        Broadcast<Integer> messagingPort = ssc.sparkContext().broadcast(port);
+
+        max.foreachRDD(rdd -> {
+
+            rdd.foreach(record -> {
+
+                Vertx vertx = Vertx.vertx();
+                ProtonClient client = ProtonClient.create(vertx);
+
+                LOG.info("Connecting to messaging ...");
+                client.connect(messagingHost.value(), messagingPort.getValue(), done -> {
+
+                    if (done.succeeded()) {
+
+                        LOG.info("... connected to {} {}", messagingHost.value(), messagingPort.getValue());
+
+                        ProtonConnection connection = done.result();
+                        connection.open();
+
+                        ProtonSender sender = connection.createSender(destinationAddress);
+                        sender.open();
+
+                        LOG.info("Sending {} ...", record);
+                        Message message = ProtonHelper.message(destinationAddress, record.toString());
+                        sender.send(message, delivery -> {
+
+                            LOG.info("... message sent");
+                            sender.close();
+                            connection.close();
+                            vertx.close();
+                        });
+
+                    } else {
+
+                        LOG.error("Error on AMQP connection for sending", done.cause());
+                    }
+
+                });
+
+            });
+        });
 
         return ssc;
     }
+
 }
