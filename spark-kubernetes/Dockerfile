@@ -12,6 +12,7 @@ RUN tar xvfz spark-${SPARK_VERSION}-bin-hadoop2.6.tgz -C /opt
 
 ENV SPARK_HOME=/opt/spark-${SPARK_VERSION}-bin-hadoop2.6
 
+ADD log4j.properties $SPARK_HOME/conf/log4j.properties
 ADD start-common.sh start-worker.sh start-master.sh /
 
 ENV PATH $PATH:$SPARK_HOME/bin
