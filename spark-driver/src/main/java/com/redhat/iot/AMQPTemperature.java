@@ -5,7 +5,9 @@ import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonHelper;
 import io.vertx.proton.ProtonSender;
+import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Data;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
 import org.apache.spark.SparkConf;
@@ -68,9 +70,13 @@ public class AMQPTemperature {
         JavaReceiverInputDStream<Integer> receiveStream =
                 AMQPUtils.createStream(ssc, host, port, sourceAddress, message -> {
 
-                    Section body = message.getBody();
-                    if (body instanceof AmqpValue) {
-                        int temp = Integer.valueOf(((AmqpValue) body).getValue().toString());
+                    Section section = message.getBody();
+                    if (section instanceof AmqpValue) {
+                        int temp = Integer.valueOf(((AmqpValue) section).getValue().toString());
+                        return new Some<>(temp);
+                    } else if (section instanceof Data) {
+                        Binary data = ((Data)section).getValue();
+                        int temp = Integer.valueOf(new String(data.getArray()));
                         return new Some<>(temp);
                     } else {
                         return null;
