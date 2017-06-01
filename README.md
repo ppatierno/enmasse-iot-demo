@@ -165,12 +165,31 @@ The AMQP publisher can be launched in this way from the `amqp-clients` directory
 
         java -jar ./target/amqp-publisher.jar <messaging_ip> <messaging_port> temperature
 
-providing the _messaging_ IP address and port and the _temperature_ address for sending values.
+providing the _messaging_ service IP address and port and the _temperature_ address for sending values.
 In the same way the AMQP receiver :
 
         java -jar ./target/amqp-receiver.jar <messaging_ip> <messaging_port> max
 
-providing the _messaging_ IP address and port and the _max_ address for reading filtered maximum values.
+providing the _messaging_ service IP address and port and the _max_ address for reading filtered maximum values.
+
+### MQTT clients
+
+Other than using the provided AMQP clients, it's possible to use MQTT clients for sending temperature values and receiving filtered maximum values.
+Using the `mosquitto_pub` and `mosquitto_sub` tools is quite simple.
+
+For sending a temperature value :
+
+        mosquitto_pub -h <mqtt_ip> -p <mqtt_port> -q 0 -t temperature -m 23
+
+providing the _mqtt_ service IP address and port, the QoS (i.e. 0), the topic name as _temperature_ and finally the message payload (i.e. 23 °C).
+In the same way for receiving :
+
+        mosquitto_sub -h <mqtt_ip> -p <mqtt_port> -q 0 -t max
+
+providing the _mqtt_ service IP address and port, the QoS (i.e. 0) and finally the topic name as _max_.
+
+> in order to the the MQTT subscriber working, it's mandatory to change the address declaration for the _max_ address. In this case it needs to have "multicast" equals "true"
+and as "flavor" using a "vanilla-topic". It's also needed if you want more receivers getting messages in a publish/subscribe way instead of competing consumers on a queue.
 
 ### A view from the EnMasse console
 
