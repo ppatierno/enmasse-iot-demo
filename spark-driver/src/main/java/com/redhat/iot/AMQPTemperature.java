@@ -119,8 +119,11 @@ public class AMQPTemperature {
                         ProtonSender sender = connection.createSender(destinationAddress);
                         sender.open();
 
+                        Message message = ProtonHelper.message();
+                        message.setAddress(destinationAddress);
+                        message.setBody(new Data(new Binary(record.toString().getBytes())));
+
                         LOG.info("Sending {} ...", record);
-                        Message message = ProtonHelper.message(destinationAddress, record.toString());
                         sender.send(message, delivery -> {
 
                             LOG.info("... message sent");
