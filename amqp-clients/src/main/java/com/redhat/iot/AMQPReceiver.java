@@ -7,6 +7,8 @@ import io.vertx.proton.ProtonReceiver;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Section;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -14,6 +16,8 @@ import java.io.IOException;
  * Created by ppatiern on 31/05/17.
  */
 public class AMQPReceiver {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPReceiver.class);
 
     private static String host = "localhost";
     private static int port = 5672;
@@ -37,12 +41,16 @@ public class AMQPReceiver {
 
         ProtonClient client = ProtonClient.create(vertx);
 
+        LOG.info("Starting receiver : connecting to [{}:{}] address [{}]", host, port, address);
+
         client.connect(host, port, done -> {
 
             if (done.succeeded()) {
 
                 connection = done.result();
                 connection.open();
+
+                LOG.info("Connected as {}", connection.getContainer());
 
                 receiver = connection.createReceiver(address);
 
@@ -53,7 +61,7 @@ public class AMQPReceiver {
                     if (section instanceof AmqpValue) {
 
                         String text = (String) ((AmqpValue)section).getValue();
-                        System.out.println("Message received " + text);
+                        LOG.info("Received max = {} °C", text);
                     }
 
                     delivery.disposition(Accepted.getInstance(), true);
@@ -69,6 +77,8 @@ public class AMQPReceiver {
             if (receiver.isOpen())
                 receiver.close();
             connection.close();
+
+            vertx.close();
 
         } catch (IOException e) {
             e.printStackTrace();

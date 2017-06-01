@@ -7,7 +7,10 @@ import io.vertx.proton.ProtonHelper;
 import io.vertx.proton.ProtonSender;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.message.Message;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Random;
 
 /**
@@ -15,9 +18,14 @@ import java.util.Random;
  */
 public class AMQPPublisher {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AMQPPublisher.class);
+
     private static String host = "localhost";
     private static int port = 5672;
     private static String address = "temperature";
+
+    private static ProtonConnection connection;
+    private static ProtonSender sender;
 
     public static void main(String[] args) {
 
@@ -34,32 +42,53 @@ public class AMQPPublisher {
 
         ProtonClient client = ProtonClient.create(vertx);
 
+        LOG.info("Starting publisher : connecting to [{}:{}] address [{}]", host, port, address);
+
         client.connect(host, port, done -> {
 
             if (done.succeeded()) {
 
-                ProtonConnection connection = done.result();
+                connection = done.result();
                 connection.open();
 
-                ProtonSender sender = connection.createSender(address);
+                LOG.info("Connected as {}", connection.getContainer());
+
+                sender = connection.createSender(address);
                 sender.open();
 
                 Random random = new Random();
 
                 vertx.setPeriodic(1000, t -> {
 
-                    int temp = 20 + random.nextInt(5);
+                    if (!sender.sendQueueFull()) {
 
-                    Message message = ProtonHelper.message();
-                    message.setBody(new AmqpValue(String.valueOf(temp)));
+                        int temp = 20 + random.nextInt(5);
 
-                    System.out.println("Temperature = " + temp);
-                    sender.send(message, delivery -> {
+                        Message message = ProtonHelper.message();
+                        message.setBody(new AmqpValue(String.valueOf(temp)));
 
-                    });
+                        LOG.info("Sending temperature = {} °C ...", temp);
+                        sender.send(message, delivery -> {
+                            LOG.info("... delivered {}", delivery.getRemoteState());
+                        });
+
+                    }
 
                 });
             }
         });
+
+        try {
+            System.in.read();
+
+            if (sender.isOpen())
+                sender.close();
+            connection.close();
+
+            vertx.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
