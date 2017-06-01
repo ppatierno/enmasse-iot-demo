@@ -4,8 +4,10 @@ import io.vertx.core.Vertx;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonReceiver;
+import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Data;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,9 +61,14 @@ public class AMQPReceiver {
                     Section section = message.getBody();
 
                     if (section instanceof AmqpValue) {
-
                         String text = (String) ((AmqpValue)section).getValue();
                         LOG.info("Received max = {} °C", text);
+                    } else if (section instanceof Data) {
+                        Binary data = ((Data)section).getValue();
+                        int temp = Integer.valueOf(new String(data.getArray()));
+                        LOG.info("Received max = {} °C", temp);
+                    } else {
+                        LOG.info("Discarded message : body type not supported");
                     }
 
                     delivery.disposition(Accepted.getInstance(), true);
