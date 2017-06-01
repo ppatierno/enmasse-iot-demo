@@ -41,15 +41,21 @@ The above deployment files refer to the ppatierno/spark:2.0 image available on D
 For deploying all this stuff, the default virtual machine size used by minikube (2 CPU cores and 2048 GB of RAM) isn't enough so it's better to start minikube with more resources like this.
 
         minikube start --cpus=4 --memory=4096
+        
+Before deploying all the stuff, let's create a dedicated namespace.
+
+        kubectl create namespace enmasse-spark
+
+In this way all the following commands will be executed in the _enmasse-spark_ namespace.
 
 In order to deploy the Spark master node and the related service :
 
-        kubectl create -f spark-kubernetes/spark-master.yaml
-        kubectl create -f spark-kubernetes/spark-master-service.yaml
+        kubectl create -f spark-kubernetes/spark-master.yaml -n enmasse-spark
+        kubectl create -f spark-kubernetes/spark-master-service.yaml -n enmasse-spark
 
 In order to deploy the Spark worker node :
 
-        kubectl create -f spark-kubernetes/spark-worker.yaml
+        kubectl create -f spark-kubernetes/spark-worker.yaml -n enmasse-spark
 
 ![Apache Spark on Kubernetes](./images/spark_kubernetes.png)
 
@@ -61,14 +67,14 @@ which will spin up an Nginx ingress controller pod for handling _ingress_ resour
 
 In order to deploy EnMasse you can follow this Getting Started [guide](https://github.com/EnMasseProject/enmasse/blob/master/documentation/getting-started/kubernetes.md) mainly based on downloading the latest EnMasse release from [here](https://github.com/EnMasseProject/enmasse/releases), unpack it and executing following commands for a manual deployment :
 
-        kubectl create sa enmasse-service-account
-        kubectl apply -f kubernetes/enmasse.yaml
+        kubectl create sa enmasse-service-account -n enmasse-spark
+        kubectl apply -f kubernetes/enmasse.yaml -n enmasse-spark
 
 After deploying EnMasse, the address controller and the console are accessible through pre-configured _ingress_ but instead of doing the same for accessing the messaging infrastructure outside of the cluster from the host (through AMQP and MQTT), it's possible to execute a patch changing from _ClusterIP_ to _NodePort_ for the _messaging_ service. 
 If you want to access using MQTT protocol as well, the same thing should be done for the _mqtt_ service.
 
-        kubectl patch service messaging -p '{"spec" : { "type" : "NodePort" }}'
-        kubectl patch service mqtt -p '{"spec" : { "type" : "NodePort" }}'
+        kubectl patch service messaging -p '{"spec" : { "type" : "NodePort" }}' -n enmasse-spark
+        kubectl patch service mqtt -p '{"spec" : { "type" : "NodePort" }}' -n enmasse-spark
 
 In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) ports, there will be other node ports useful for reaching such services from outside the cluster using
 the minikube IP address.
@@ -79,7 +85,7 @@ the minikube IP address.
         kubernetes           10.0.0.1     <none>        443/TCP                                                         1h
         messaging            10.0.0.35    <nodes>       5672:32014/TCP,5671:32661/TCP,55673:32092/TCP,55672:30490/TCP   3m
         mqtt                 10.0.0.125   <nodes>       1883:31674/TCP,8883:30896/TCP                                   3m
-        spark-master         10.0.0.197   <nodes>       8080:32592/TCP,7077:32304/TCP                                   1h
+        spark-master         10.0.0.197   <none>        8080/TCP,7077/TCP                                               1h
         subscription         10.0.0.178   <none>        5672/TCP                                                        3m
 
 ![EnMasse on Kubernetes](./images/enmasse_kubernetes.png)
@@ -100,6 +106,8 @@ For EnMasse, a specific YAML file is provided in order to add other services mar
 
         kubectl apply -f kubernetes/addons/external-lb.yaml
 
+> This step is needed for ACS instead of patching services to use _NodePort_ as for the minikube deployment
+
 So finally the exposed services are the following :
 
         NAME                          CLUSTER-IP     EXTERNAL-IP      PORT(S)                                 AGE
@@ -112,7 +120,7 @@ So finally the exposed services are the following :
         messaging-external            10.0.253.186   52.164.120.234   5672:31398/TCP,5671:31813/TCP           3m
         mqtt                          10.0.93.42     <none>           1883/TCP,8883/TCP                       11m
         mqtt-external                 10.0.12.156    13.74.150.148    1883:31653/TCP,8883:30343/TCP           3m
-        spark-master                  10.0.201.123   13.74.165.147    8080:31207/TCP,7077:30753/TCP           21m
+        spark-master                  10.0.201.123   <none>           8080/TCP,7077/TCP                       21m
         subscription                  10.0.184.112   <none>           5672/TCP                                11m
 
 In the ACS deployment, "external" services are accessible to the assigned external IP using the default port (i.e. 5672 for messaging, 1883 for mqtt, ...).
@@ -149,7 +157,7 @@ This application can be packaged in the following way :
 
 After that, the built Docker image can be deployed to the cluster with this command :
 
-        kubectl create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-svc.yaml
+        kubectl create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-svc.yaml -n enmasse-spark
         
 ### AMQP clients
 
