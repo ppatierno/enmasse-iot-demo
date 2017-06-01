@@ -1,7 +1,13 @@
 # EnMasse - Spark Streaming demo
 
-This demo shows how it's possible to use a [Kubernetes](https://kubernetes.io/) or [OpenShift](https://www.openshift.com/) cluster running [EnMasse](https://enmasseproject.github.io/) and [Apache Spark](https://spark.apache.org/ in order to have a way for ingesting data through a scalable messaging infrastructure and then processing such data using Spark Streaming jobs.
-The proposed IoT scenario is related to an AMQP publisher which sends simulated temperature values and a Spark Streaming job which processes such data in order to get the max value in the latest 5 seconds.
+This demo shows how it's possible to use a [Kubernetes](https://kubernetes.io/) or [OpenShift](https://www.openshift.com/) cluster running [EnMasse](https://enmasseproject.github.io/) and [Apache Spark](https://spark.apache.org/) in order to have a way for ingesting data through a scalable messaging infrastructure and then processing such data using Spark Streaming jobs.
+The proposed IoT scenario is made of : 
+
+* an AMQP publisher which sends simulated temperature values to a _temperature_ address (backed by a queue)
+* a Spark Streaming driver application which reads above values in order to process the maximum value in the latest 5 seconds, sending the processed value to a _max_ address (backed by a queue)
+* an AMQP receiver which gets filtered maximum temperature values reading from the _max_ address
+
+The following pictures shows how all the above components define the overall demo deployment.
 
 ![Demo deployment](./images/demo_deployment.png)
 
@@ -18,13 +24,13 @@ The OpenShift cluster can be set up locally using the `oc` tool as described in 
 The current repo provides the following resources (in the `spark` directory) for deploying an Apache Spark cluster in _standalone mode_ made of one master node and one worker node.
 
 * _Dockerfile_ : a Docker file for building an Apache Spark image
-* _start-common.sh, start-master.sh, start-worker.sh_ : some bash files for starting the master and the worker node
-* _spark-master.yaml, spark-master-service.yaml_ : YAML resources files which describe deployment and service for the master node to deploy on Kubernetes
-* _spark-worker.yaml_ : YAML resources file which describes deployment for the worker node to deploy on Kubernetes
+* _start-common.sh, start-master.sh, start-worker.sh_ : bash files for starting the master and the worker node
+* _spark-master.yaml, spark-master-service.yaml_ : YAML resources files which describe Kubernetes/OpenShift deployments and services for the master node to deploy
+* _spark-worker.yaml_ : YAML resources file which describes Kubernetes/OpenShift deployment for the worker node
 
 The above deployment files refer to the ppatierno/spark:2.0 image available on Docker Hub but you can re-build such image using the Dockerfile and then changing the image name in the related deployment files.
 
-> Credits to [this](https://github.com/phatak-dev/kubernetes-spark) project and [this](https://github.com/kubernetes/kubernetes/tree/master/examples/spark) project for definining the above Dockerfile and YAML resources file for deploying Apache Spark on Kubernetes.
+> Credits to [this](https://github.com/phatak-dev/kubernetes-spark) and [this](https://github.com/kubernetes/kubernetes/tree/master/examples/spark) projects for defining the above Dockerfile(s) and YAML resources files for deploying Apache Spark on Kubernetes. The OpenShift deployment is provided through the [radanalytics.io](http://radanalytics.io/) project.
 
 ## Kubernetes
 
@@ -32,7 +38,7 @@ The above deployment files refer to the ppatierno/spark:2.0 image available on D
 
 > If you have re-built the Apache Spark image and you want to avoid pushing it to the Docker Hub, use the following command `docker save <image> | minikube ssh docker load` for making it available in the Docker images registry which is local to the virtual machine used by minikube.
 
-It's possible that for deploying all this stuff, the default virtual machine size used by minikube (2 CPU cores and 2048 GB of RAM) couldn't be enough so it's better to start minikube with more resources like this.
+For deploying all this stuff, the default virtual machine size used by minikube (2 CPU cores and 2048 GB of RAM) isn't enough so it's better to start minikube with more resources like this.
 
         minikube start --cpus=4 --memory=4096
 
@@ -41,43 +47,31 @@ In order to deploy the Spark master node and the related service :
         kubectl create -f spark-kubernetes/spark-master.yaml
         kubectl create -f spark-kubernetes/spark-master-service.yaml
 
-With the current deployment, the Spark master service is reachable only inside the cluster (needed by the Spark worker node) but we are not able to submit Spark jobs from outside the cluster (i.e. from the host).
-In order to do that we can patch the Spark master service changing its type from _ClusterIP_ to _NodePort_ in the following way :
-
-        kubectl patch service spark-master -p '{"spec" : { "type" : "NodePort" }}'
-
-After that, the Spark master service will expose ports 8080 and 7077 inside the cluster and different ports for being accessible from outside the cluser (node ports are assigned over 30000).
-For example, running :
-
-        kubectl get service
-
-The output could be :
-
-        NAME           CLUSTER-IP   EXTERNAL-IP   PORT(S)                         AGE
-        kubernetes     10.0.0.1     <none>        443/TCP                         9m
-        spark-master   10.0.0.197   <nodes>       8080:32592/TCP,7077:32304/TCP   6m
-
-It means that inside the cluster the Spark master node ports are 8080 and 7077 but from outisde the cluster, using the `minikube` ip address, the exposed ports are 32592 (instead of 8080) and 32304 (instead of 7077).
-
-> For getting the IP address of the virtual machine cluster, the command `minikube ip` can be used.
-
 In order to deploy the Spark worker node :
 
         kubectl create -f spark-kubernetes/spark-worker.yaml
 
 ![Apache Spark on Kubernetes](./images/spark_kubernetes.png)
 
+Before deploying EnMasse, in order to have the console accessible from outside the cluster we need to enable the minikube _ingress_ addon.
+
+        minikube addons enable ingress
+
+which will spin up an Nginx ingress controller pod for handling _ingress_ resources.
+
 In order to deploy EnMasse you can follow this Getting Started [guide](https://github.com/EnMasseProject/enmasse/blob/master/documentation/getting-started/kubernetes.md) mainly based on downloading the latest EnMasse release from [here](https://github.com/EnMasseProject/enmasse/releases), unpack it and executing following commands for a manual deployment :
 
         kubectl create sa enmasse-service-account
         kubectl apply -f kubernetes/enmasse.yaml
 
-After deploying EnMasse, instead of configuring "ingress" resources for accessing the messaging infrastructure outside of the cluster from the host, it's possible to execute the same patch as for the Spark master service, changing from _ClusterIP_ to _NodePort_ for the messaging service. If you want to access using MQTT protocol as well, the same thing should be done for the mqtt service.
+After deploying EnMasse, the address controller and the console are accessible through pre-configured _ingress_ but instead of doing the same for accessing the messaging infrastructure outside of the cluster from the host (through AMQP and MQTT), it's possible to execute a patch changing from _ClusterIP_ to _NodePort_ for the _messaging_ service. 
+If you want to access using MQTT protocol as well, the same thing should be done for the _mqtt_ service.
 
         kubectl patch service messaging -p '{"spec" : { "type" : "NodePort" }}'
         kubectl patch service mqtt -p '{"spec" : { "type" : "NodePort" }}'
 
-In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) ports, there will be other node ports useful for reaching such services from outside the cluster.
+In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) ports, there will be other node ports useful for reaching such services from outside the cluster using
+the minikube IP address.
 
         NAME                 CLUSTER-IP   EXTERNAL-IP   PORT(S)                                                         AGE
         address-controller   10.0.0.56    <none>        8080/TCP,5672/TCP                                               7m
@@ -90,31 +84,19 @@ In this way, other then the default AMQP (5672, 5673) and MQTT (1883, 8883) port
 
 ![EnMasse on Kubernetes](./images/enmasse_kubernetes.png)
 
-In order to have the EnMasse console accessible we need to enable the minikube `ingress` addon.
+> For getting the IP address of the virtual machine cluster, the command `minikube ip` can be used.
 
-        minikube addons enable ingress
-
-> This command will spin up an Nginx ingress controller pod for handling ingress
-
-Finally you should see the console at http://<minikube ip>.
+Finally you should see the console at http://<minikube ip>/.
 
 ![EnMasse console](./images/enmasse_console.png)
+
+And interacting with the address controller at http://<minikube ip>:<exposed port>/v3/address.
 
 ### Azure Container Service
 
 In order to use the ACS, the first step is to deploy a Kubernetes cluster following the official [walkthrough](https://docs.microsoft.com/en-us/azure/container-service/container-service-kubernetes-walkthrough).
 
-The big difference compared to the local minikube solution is that the services need to be exposed using the provisioned Azure load balancer, so the same patch is used for changing type from _ClusterIP_ to _LoadBalancer_.
-
-        kubectl patch service spark-master -p '{"spec" : { "type" : "LoadBalancer" }}'
-
-In this case, the Spark master service will have an assigned external IP :
-
-        NAME           CLUSTER-IP     EXTERNAL-IP     PORT(S)                         AGE
-        kubernetes     10.0.0.1       <none>          443/TCP                         14m
-        spark-master   10.0.201.123   13.74.165.147   8080:31207/TCP,7077:30753/TCP   5m
-
-For EnMasse, a specific YAML file is provided in order to add other services (for messaging, mqtt, ...) which are exposed outside the cluster using the cloud provider load balancer.
+For EnMasse, a specific YAML file is provided in order to add other services marked as "external" (for messaging, mqtt, ...) which are exposed outside the cluster using the cloud provider load balancer.
 
         kubectl apply -f kubernetes/addons/external-lb.yaml
 
@@ -133,7 +115,7 @@ So finally the exposed services are the following :
         spark-master                  10.0.201.123   13.74.165.147    8080:31207/TCP,7077:30753/TCP           21m
         subscription                  10.0.184.112   <none>           5672/TCP                                11m
 
-Even if node ports are showed with the default ones (i.e. 8080, 5672, 1883, ...), the last ones can be used together with the external IP for accessing services from outside the cluster.
+In the ACS deployment, "external" services are accessible to the assigned external IP using the default port (i.e. 5672 for messaging, 1883 for mqtt, ...).
 
 ## OpenShift
 
@@ -141,23 +123,14 @@ TODO
 
 ## Demo application
 
-The demo application is based on this [AMQP Spark Streaming demo](https://github.com/redhat-iot/amqp-spark-demo) repo where the scenario is the following :
+The demo application is provided through the following modules :
 
-* an AMQP publisher application sends simulated temperature values every seconds to the _temperature_ address
-* an AMQP Spark driver application uses the [AMQP Spark Streaming connector](https://github.com/radanalyticsio/streaming-amqp) in order to receive such values from the same _temperature_ address and then executing a Spark job for getting max value in the latest 5 seconds
-
-The above repo describes all the steps for setting up the demo running against an Apache Artemis broker instance using a queue named _temperature_ as destination.
-
-The first needed step is to build the source code application as described [here](https://github.com/redhat-iot/amqp-spark-demo#building-the-demo-source-code).
-
-The current demo use the same AMQP publisher but a modified version for the Spark driver application which doesn't just print the filtered values on the console but sends
-them to the _max_ address using AMQP.
-
-Regarding the AMQP publisher application, the _messaging_ service address/port will be specified; the same of the Spark driver other than the right address for the Spark master node.
+* _spark driver_: the Spark Streaming driver application included in the related Docker image for running inside the deployed cluster
+* _amqp_clients_: this provides the AMQP publisher and receiver clients for sending simulated temperature values and getting filtered maximum values
 
 ### Deploying addresses
 
-The demo is about the AMQP publisher which sends temperature values to the _temperature_ address and an AMQP receiver which receives filtered max values (in the latest 5 seconds) from the _max_ address.
+As said, the demo is about the AMQP publisher which sends temperature values to the _temperature_ address and an AMQP receiver which receives filtered max values (in the latest 5 seconds) from the _max_ address.
 This address can be used in a _direct messaging_ fashion or deploying two queues in EnMasse in order to leverage on buffering messages through a broker without pushing so much on the Spark Streaming application.
 In order to do that, an addresses JSON description file is provided and can be deployed in the following way :
 
@@ -169,7 +142,7 @@ It's possible doing the same using the EnMasse console directly.
 
 ### Spark driver application
 
-The `spark-driver` folder provides the above AMQP temperature application (developed in Java) and a Docker image for running the related Spark driver inside the cluster.
+The `spark-driver` directory provides the Spark Streaming driver application and a Docker image for running the related Spark driver inside the cluster.
 This application can be packaged in the following way :
 
         mvn package -Pbuild-docker-image
@@ -177,11 +150,24 @@ This application can be packaged in the following way :
 After that, the built Docker image can be deployed to the cluster with this command :
 
         kubectl create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-svc.yaml
+        
+### AMQP clients
+
+The AMQP publisher can be launched in this way from the `amqp-clients` directory after packaging them :
+
+        java -jar ./target/amqp-publisher.jar <messaging_ip> <messaging_port> temperature
+
+providing the _messaging_ IP address and port and the _temperature_ address for sending values.
+In the same way the AMQP receiver :
+
+        java -jar ./target/amqp-receiver.jar <messaging_ip> <messaging_port> max
+
+providing the _messaging_ IP address and port and the _max_ address for reading filtered maximum values.
 
 ### A view from the EnMasse console
 
 Following picture shows how there is a connection from the publisher on the _temperature_ address sending values, a connection from the final receiver on the _max_ address 
-for getting filtered values and finally a receiver (the Spark Streaming driver) on the _temperature_ address as well getting values for streaming analytics.
+for getting filtered maximum values and finally a receiver (the Spark Streaming driver) on the _temperature_ address as well getting values for streaming analytics.
 
 ![EnMasse console connections](./images/enmasse_console_connections.png)
 
