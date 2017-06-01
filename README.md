@@ -174,12 +174,17 @@ providing the _messaging_ IP address and port and the _max_ address for reading 
 
 ### A view from the EnMasse console
 
-Following picture shows how there is a connection from the publisher on the _temperature_ address sending values, a connection from the final receiver on the _max_ address 
+The following picture shows the main dashboard with general information about how the senders and receivers are distributed across addresses and how many messages have been processed so far.
+
+![EnMasse console dashboard](./images/enmasse_console_dashboard.png)
+
+This other picture shows how there is a connection from the publisher on the _temperature_ address sending values, a connection from the final receiver on the _max_ address 
 for getting filtered maximum values and finally a receiver (the Spark Streaming driver) on the _temperature_ address as well getting values for streaming analytics.
 
 ![EnMasse console connections](./images/enmasse_console_connections.png)
 
-In this picture, the _temperature_ and _max_ addresses are showed with more information even related to the AMQP links created against them.
+In this picture, the _temperature_ and _max_ addresses are showed with more information even related to the AMQP links created against them and if some messages are stored
+if, for example, the receiver isn't online and the Spark Streaming driver is putting filtered maximum values in the related queue.
 
 ![EnMasse console connections](./images/enmasse_console_addresses.png)
 
