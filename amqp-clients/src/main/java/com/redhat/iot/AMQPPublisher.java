@@ -68,9 +68,13 @@ public class AMQPPublisher {
                         message.setBody(new AmqpValue(String.valueOf(temp)));
 
                         LOG.info("Sending temperature = {} °C ...", temp);
-                        sender.send(message, delivery -> {
-                            LOG.info("... delivered {}", delivery.getRemoteState());
-                        });
+
+                        if (sender.isOpen()) {
+
+                            sender.send(message, delivery -> {
+                                LOG.info("... delivered {}", delivery.getRemoteState());
+                            });
+                        }
 
                     }
 
