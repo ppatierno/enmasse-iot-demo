@@ -104,7 +104,7 @@ In order to use the ACS, the first step is to deploy a Kubernetes cluster follow
 
 For EnMasse, a specific YAML file is provided in order to add other services marked as "external" (for messaging, mqtt, ...) which are exposed outside the cluster using the cloud provider load balancer.
 
-        kubectl apply -f kubernetes/addons/external-lb.yaml
+        kubectl apply -f kubernetes/addons/external-lb.yaml -n enmasse-spark
 
 > This step is needed for ACS instead of patching services to use _NodePort_ as for the minikube deployment
 
