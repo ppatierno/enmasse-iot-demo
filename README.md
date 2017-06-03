@@ -92,11 +92,11 @@ the minikube IP address.
 
 > For getting the IP address of the virtual machine cluster, the command `minikube ip` can be used.
 
-Finally you should see the console at http://<minikube ip>/.
+Finally you should see the console at `http://<minikube ip>/`.
 
 ![EnMasse console](./images/enmasse_console.png)
 
-And interacting with the address controller at http://<minikube ip>:<exposed port>/v3/address.
+And interacting with the address controller at `http://<minikube ip>:<exposed port>/v3/address`.
 
 ### Azure Container Service
 
