@@ -102,6 +102,11 @@ And interacting with the address controller at `http://<minikube ip>:<exposed po
 
 In order to use the ACS, the first step is to deploy a Kubernetes cluster following the official [walkthrough](https://docs.microsoft.com/en-us/azure/container-service/container-service-kubernetes-walkthrough).
 
+The following picture shows how the Kubernetes cluster deployed in ACS is made of different resources (inside a resource group) like virtual machines (for master and worker nodes),
+network interfaces, load balancer and so on.
+
+![ACS_resource_group](./images/acs_resource_group.png)
+
 For EnMasse, a specific YAML file is provided in order to add other services marked as "external" (for messaging, mqtt, ...) which are exposed outside the cluster using the cloud provider load balancer.
 
         kubectl apply -f kubernetes/addons/external-lb.yaml -n enmasse-spark
