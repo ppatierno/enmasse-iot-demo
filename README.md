@@ -1,3 +1,8 @@
+This repository contains all the bits for setting up the demo of the "Open sourcing the IoT : running EnMasse on Kubernetes" session at "Industry 4.0 & AgileIoT" by Paolo Patierno. Other than the source code following :
+
+* [Slide deck](https://www.slideshare.net/paolopat/open-sourcing-the-iot-enmasse-running-on-kubernetes)
+* A [video](https://www.youtube.com/watch?v=Qy47WXl4h5w) about the demo
+
 # EnMasse - Spark Streaming demo
 
 This demo shows how it's possible to use a [Kubernetes](https://kubernetes.io/) or [OpenShift](https://www.openshift.com/) cluster running [EnMasse](https://enmasseproject.github.io/) and [Apache Spark](https://spark.apache.org/) in order to have a way for ingesting data through a scalable messaging infrastructure and then processing such data using Spark Streaming jobs.
