@@ -51,8 +51,6 @@ Before deploying all the stuff, let's create a dedicated namespace.
 
         kubectl create namespace enmasse-spark
 
-In this way all the following commands will be executed in the _enmasse-spark_ namespace.
-
 In order to deploy the Spark master node and the related service :
 
         kubectl create -f spark-kubernetes/spark-master.yaml -n enmasse-spark
@@ -137,7 +135,28 @@ In the ACS deployment, "external" services are accessible to the assigned extern
 
 ## OpenShift
 
-TODO
+After having the OpenShift cluster up and running using the `oc` tool, the first step is to deploy an Apache Spark cluster inside it.
+
+Before deploying all the stuff, let's create a dedicated project.
+
+        oc new-project enmasse-spark
+
+After that, an official support for Apache Spark on OpenShift is provided by the [radanalytics.io](https://radanalytics.io/) project which provides the Oshinko application
+with a web UI for deploying a Spark cluster. The [getting started](https://radanalytics.io/get-started) explains in details how to do that even if main steps are described below.
+
+First, you have to get the Oshinko resources into your project.
+
+        oc create -f https://radanalytics.io/resources.yaml -n enmasse-spark
+
+Then start the Oshinko Web UI application.
+
+        oc new-app oshinko-webui
+
+Using this UI, you are able to deploy an Apache Spark cluster inside OpenShift specifying the number of worker nodes you want (other than the default master).
+
+![Oshinko Web UI Spark cluster](./images/oshinko_ui_spark.png)
+
+<TO BE CONTINUED ...>
 
 ## Demo application
 
