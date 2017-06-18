@@ -167,10 +167,6 @@ Using OpenShift, the Spark driver application is available through a Template th
 
         oc create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-template.yaml
         
-After that, you can use the OpenShift web UI in order to create the driver application using such template specifying the Spark master node host and port as parameters.
-
-![Spark driver application template](./images/spark_driver_template.png)
-
 ## Demo application
 
 The demo application is provided through the following modules :
@@ -196,10 +192,18 @@ The `spark-driver` directory provides the Spark Streaming driver application and
 This application can be packaged in the following way :
 
         mvn package -Pbuild-docker-image
+        
+#### Kubernetes
 
 After that, the built Docker image can be deployed to the cluster with this command :
 
         kubectl create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-svc.yaml -n enmasse-spark
+        
+#### OpenShift
+
+After that, you can use the OpenShift web UI in order to create the driver application using such template specifying the Spark master node host and port as parameters.
+
+![Spark driver application template](./images/spark_driver_template.png)
         
 ### AMQP clients
 
