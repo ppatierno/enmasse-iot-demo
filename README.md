@@ -162,8 +162,14 @@ In order to deploy EnMasse you can follow this Getting Started [guide](https://g
         oc policy add-role-to-user view system:serviceaccount:enmasse-spark:default
         oc policy add-role-to-user edit system:serviceaccount:enmasse-spark:enmasse-service-account
         oc process -f openshift/enmasse.yaml  | oc create -n enmasse-spark -f -
+        
+Using OpenShift, the Spark driver application is available through a Template that needs to be uploaded to the cluster.
 
-<TO BE CONTINUED ...>
+        oc create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-template.yaml
+        
+After that, you can use the OpenShift web UI in order to create the driver application using such template specifying the Spark master node host and port as parameters.
+
+![Spark driver application template](./images/spark_driver_template.png)
 
 ## Demo application
 
