@@ -156,6 +156,13 @@ Using this UI, you are able to deploy an Apache Spark cluster inside OpenShift s
 
 ![Oshinko Web UI Spark cluster](./images/oshinko_ui_spark.png)
 
+In order to deploy EnMasse you can follow this Getting Started [guide](https://github.com/EnMasseProject/enmasse/blob/master/documentation/getting-started/openshift.md) mainly based on executing following commands for a manual installation :
+
+        oc create sa enmasse-service-account -n enmasse-spark
+        oc policy add-role-to-user view system:serviceaccount:enmasse-spark:default
+        oc policy add-role-to-user edit system:serviceaccount:enmasse-spark:enmasse-service-account
+        oc process -f openshift/enmasse.yaml  | oc create -n enmasse-spark -f -
+
 <TO BE CONTINUED ...>
 
 ## Demo application
