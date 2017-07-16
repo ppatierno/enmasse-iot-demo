@@ -33,7 +33,7 @@ The current repo provides the following resources (in the `spark` directory) for
 * _spark-master.yaml, spark-master-service.yaml_ : YAML resources files which describe Kubernetes/OpenShift deployments and services for the master node to deploy
 * _spark-worker.yaml_ : YAML resources file which describes Kubernetes/OpenShift deployment for the worker node
 
-The above deployment files refer to the ppatierno/spark:2.0 image available on Docker Hub but you can re-build such image using the Dockerfile and then changing the image name in the related deployment files.
+The above deployment files refer to the ppatierno/spark:2.1 image available on Docker Hub but you can re-build such image using the Dockerfile and then changing the image name in the related deployment files.
 
 > Credits to [this](https://github.com/phatak-dev/kubernetes-spark) and [this](https://github.com/kubernetes/kubernetes/tree/master/examples/spark) projects for defining the above Dockerfile(s) and YAML resources files for deploying Apache Spark on Kubernetes. The OpenShift deployment is provided through the [radanalytics.io](http://radanalytics.io/) project.
 
@@ -167,6 +167,8 @@ Using OpenShift, the Spark driver application is available through a Template th
 
         oc create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-template.yaml
         
+After uploading it, 
+        
 ## Demo application
 
 The demo application is provided through the following modules :
@@ -189,9 +191,13 @@ It's possible doing the same using the EnMasse console directly.
 ### Spark driver application
 
 The `spark-driver` directory provides the Spark Streaming driver application and a Docker image for running the related Spark driver inside the cluster.
-This application can be packaged in the following way :
+If you are using Kubernetes, this application can be packaged in the following way :
 
         mvn package -Pbuild-docker-image
+
+If you are using OpenShift, this application can be packaged using a different profile :
+
+        mvn package -Pbuild-docker-image-os
         
 #### Kubernetes
 

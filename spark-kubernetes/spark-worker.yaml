@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: spark-worker
-        image: ppatierno/spark:2.0
+        image: ppatierno/spark:2.1
         imagePullPolicy : "IfNotPresent"
         command: ["/start-worker.sh"]
         ports:
