@@ -12,9 +12,13 @@ The proposed IoT scenario is made of :
 * a Spark Streaming driver application which reads above values in order to process the maximum value in the latest 5 seconds, sending the processed value to a _max_ address (backed by a queue)
 * an AMQP receiver which gets filtered maximum temperature values reading from the _max_ address
 
-The following pictures shows how all the above components define the overall demo deployment.
+The following pictures shows how all the above components define the overall demo deployment using Kubernetes (running inside or outsice ACS), EnMasse and Apache Spark.
 
 ![Demo deployment](./images/demo_deployment.png)
+
+The same solutin can be deployed on OpenShift using the Apache Spark provided by the [radanalytics.io](https://radanalytics.io/) project.
+
+![Demo deployment](./images/demo_deployment_os.png)
 
 ## Prerequisites
 
@@ -166,8 +170,6 @@ In order to deploy EnMasse you can follow this Getting Started [guide](https://g
 Using OpenShift, the Spark driver application is available through a Template that needs to be uploaded to the cluster.
 
         oc create -f <path-to-repo>/spark-driver/target/fabric8/spark-driver-template.yaml
-        
-After uploading it, 
         
 ## Demo application
 
