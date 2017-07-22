@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <groupId>com.redhat.iot</groupId>
-    <artifactId>enmasse-spark-demo-bom</artifactId>
+    <artifactId>enmasse-iot-demo-bom</artifactId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../bom</relativePath>
   </parent>

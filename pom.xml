@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.redhat.iot</groupId>
-  <artifactId>enmasse-spark-demo</artifactId>
+  <artifactId>enmasse-iot-demo</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
@@ -13,6 +13,7 @@
     <module>bom</module>
     <module>spark-driver</module>
     <module>amqp-clients</module>
+    <module>kafka-streams-app</module>
   </modules>
 
 </project>

@@ -1,0 +1,11 @@
+kubectl proxy -> accessing to the Kubernetes console on ACS at http://localhost:8001/ui
+
+address controller -> http://13.74.27.198:8080/v3/address
+
+console -> http://13.74.158.101:8080/
+
+amqp-receiver -> java -jar ./target/amqp-receiver.jar 13.74.27.224 5672 max
+
+amqp-publisher -> java -jar ./target/amqp-publisher.jar 13.74.27.224 5672 temperature
+
+spark-driver -> kubectl scale --replicas=0 deployment/spark-driver -n enmasse-spark
