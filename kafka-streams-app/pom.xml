@@ -74,7 +74,14 @@
                 <image>
                   <name>enmasseproject/kafka-streams-app:${project.version}</name>
                   <build>
-                    <from>openjdk:8-jre-alpine</from>
+                    <from>centos:7</from>
+                    <runCmds>
+                      <runCmd>yum -y install java-1.8.0-openjdk-devel</runCmd>
+                      <runCmd>yum clean all</runCmd>
+                    </runCmds>
+                    <env>
+                      <JAVA_HOME>/usr/lib/jvm/java</JAVA_HOME>
+                    </env>
                     <cmd>
                       <exec>
                         <arg>/run_app.sh</arg>

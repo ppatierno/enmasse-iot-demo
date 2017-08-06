@@ -89,3 +89,43 @@ The final deployment is visible using the OpenShift console.
 
 There are a bunch of components related to the messaging layer (for connecting through AMQP protocol), the administration, the MQTT protocol gateway and finally
 the AMQP - Kafka bridge.
+
+## Demo application
+
+The demo application is provided through the following modules :
+
+* _kafka_streams_app_: the Kafka Streams application included in the related Docker image for running inside the deployed cluster
+* _amqp_clients_: this provides the AMQP publisher and receiver clients for sending simulated temperature values and getting filtered maximum values
+
+### Kafka Streams application
+
+The `kafka-streams-app` directory provides the Kafka Streams application and a Docker image for running the related application inside the cluster.
+This application can be packaged in the following way :
+
+        mvn package -Pbuild-docker-image
+
+#### Kubernetes
+
+After that, the built Docker image can be deployed to the cluster with this command :
+
+        kubectl create -f <path-to-repo>/kafka-streams-app/target/fabric8/kafka-streams-app-deployment.yml -n enmasse-kafka
+
+#### OpenShift
+
+After that, the built Docker image can be deployed to the cluster with this command :
+
+        oc create -f <path-to-repo>/kafka-streams-app/target/fabric8/kafka-streams-app-deployment.yml -n enmasse-kafka
+
+### AMQP clients
+
+The AMQP publisher can be launched in this way from the `amqp-clients` directory after packaging them :
+
+        java -jar ./target/amqp-publisher.jar <messaging_ip> <messaging_port> kafka.temperature
+
+providing the _messaging_ service IP address and port and the _kafka.temperature_ address for sending values.
+In the same way the AMQP receiver :
+
+        java -jar ./target/amqp-receiver.jar <messaging_ip> <messaging_port> kafka.max/group.id/my_group
+
+providing the _messaging_ service IP address and port and the _kafka.max_ address for reading filtered maximum values,
+specifying even the "group-id" (i.e. my_group) as a Kafka consumer but over AMQP through the AMQP - Kafka bridge.
