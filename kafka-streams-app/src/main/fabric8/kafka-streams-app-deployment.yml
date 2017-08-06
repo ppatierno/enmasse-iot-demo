@@ -14,5 +14,5 @@ spec:
         name: ${project.artifactId}
     spec:
       containers:
-      - images: enmasseproject/${project.artifactId}:${project.version}
+      - image: enmasseproject/${project.artifactId}:${project.version}
         name: ${project.artifactId}
