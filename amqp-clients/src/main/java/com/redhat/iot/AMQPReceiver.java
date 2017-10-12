@@ -24,6 +24,8 @@ public class AMQPReceiver {
     private static String host = "localhost";
     private static int port = 5672;
     private static String address = "max";
+    private static String username = null;
+    private static String password = null;
 
     private static ProtonConnection connection;
     private static ProtonReceiver receiver;
@@ -39,13 +41,18 @@ public class AMQPReceiver {
         port = Integer.valueOf(args[1]);
         address = args[2];
 
+        if (args.length > 3) {
+            username = args[3];
+            password = args[4];
+        }
+
         Vertx vertx = Vertx.vertx();
 
         ProtonClient client = ProtonClient.create(vertx);
 
         LOG.info("Starting receiver : connecting to [{}:{}] address [{}]", host, port, address);
 
-        client.connect(host, port, done -> {
+        client.connect(host, port, username, password, done -> {
 
             if (done.succeeded()) {
 
